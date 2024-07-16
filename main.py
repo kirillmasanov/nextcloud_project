@@ -51,7 +51,7 @@ def convert_file(input_file, working_directory, output_directory_name):
         create_directory(user, working_directory, output_directory_name)
 
         # Используем ffmpeg для конвертации
-        ffmpeg.input('/'.join((working_directory, input_file))).output(output_file, vcodec='libx264', acodec='aac').run()
+        ffmpeg.input('/'.join((working_directory, input_file))).output(output_file, vcodec='libx264', acodec='aac').global_args('-threads', '4').run()
         print(f'File has been converted and saved as: {output_file}')
         
         # Изменение владельца файла
