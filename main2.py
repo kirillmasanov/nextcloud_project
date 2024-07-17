@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import subprocess
 import time
@@ -94,14 +95,16 @@ while True:
                 if os.path.exists(dest_file):
                     # Создаем файл с текстом "Error"
                     error_file = os.path.join(dest_subdir_full, os.path.splitext(filename)[0] + '.txt')
-                    with open(error_file, 'w') as f:
-                        f.write("Error")
-                    add_to_nextcloud(error_file)
+                    if not os.path.exists(error_file):
+                        with open(error_file, 'w') as f:
+                            current_datetime = datetime.now()
+                            ff = os.path.splitext(filename)[0] + '.mp4'
+                            f.write(f'{current_datetime}: файл {ff} уже существует!')
+                        add_to_nextcloud(error_file)
                 else:
                     # Используем ffmpeg для конвертации
                     ffmpeg.input(source_file).output(dest_file, vcodec='libx264', acodec='aac').global_args('-threads', '4').run()
                     # Удаляем файл в исходной папке
                     os.remove(source_file)
                     add_to_nextcloud(dest_file)
-    print('boom')
     time.sleep(3)
