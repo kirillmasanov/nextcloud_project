@@ -1,5 +1,4 @@
 import os
-import shutil
 import subprocess
 import time
 
@@ -16,6 +15,25 @@ directory_out = os.path.join(working_directory, dir_out_name)
 file_extension_in_list = ['.avi', '.mkv', '.mov', '.mp4']
 file_extension_out = '.mp4'
 
+def change_owner (object):
+    '''Смена владельца файла/папки'''
+    command = f'sudo chown www-data:www-data {object}'
+    try:
+        subprocess.run(command, shell=True, check=True)
+        print(f'Команда {command} выполнена успешно')
+    except subprocess.CalledProcessError as e:
+        print(f'Ошибка выполнения команды {command}: {e}')
+
+def change_rights (object):
+    '''Изменение прав доступа на файл/папку'''
+    command = ['sudo', 'chmod', '750', object]
+    try:
+        subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f'Произошла ошибка при выполнении команды: {e.stderr.decode()}')
+    except Exception as e:
+        print(f'Произошла неизвестная ошибка: {str(e)}')
+
 def check_in_out_dirs (dir_in_name, dir_out_name):
     '''Проверяет наличие исходных папок'''
     for dir in [dir_in_name, dir_out_name]:
@@ -23,37 +41,15 @@ def check_in_out_dirs (dir_in_name, dir_out_name):
         if not os.path.exists(directory):
             os.makedirs(directory, exist_ok=True)
             print(f"Папка {directory} успешно создана.")
-            # Смена владельца папки
-            command = f'sudo chown www-data:www-data {directory}'
-            try:
-                subprocess.run(command, shell=True, check=True)
-                print(f'Команда {command} выполнена успешно')
-            except subprocess.CalledProcessError as e:
-                print(f'Ошибка выполнения команды {command}: {e}')
-            # Изменения прав доступа на папку
-            command = ['sudo', 'chmod', '750', directory]
-            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if result.returncode == 0:
-                print(f'Права доступа для {directory} успешно изменены.')
-            else:
-                print(f'Произошла ошибка при изменении прав доступа на {directory}:')
-                print(result.stderr.decode())
-            # Обновление базы данных
-            command = f'sudo -u www-data php {occ} files:scan --path {user}/files'
-            args = command.split()
-            try:
-                result = subprocess.run(args, check=True)
-                print(f'Команда {command} успешно выполнена!')
-            except subprocess.CalledProcessError as e:
-                print(f'Ошибка выполнения команды {command}: {e}')
+            add_to_nextcloud (directory)
         else:
             print(f"Папка {directory} уже существует.")
 
 
-def add_to_nextcloud (dest_file):
+def add_to_nextcloud (object):
     '''Изменяет владельца, права и обновляет БД Nextcloud'''
     # Изменение владельца файла
-    command = f'sudo chown www-data:www-data {dest_file}'
+    command = f'sudo chown www-data:www-data {object}'
     try:
         subprocess.run(command, shell=True, check=True)
         print(f'Команда {command} выполнена успешно')
@@ -61,12 +57,12 @@ def add_to_nextcloud (dest_file):
         print(f'Ошибка выполнения команды {command}: {e}')
 
     # Изменения прав доступа на файл
-    command = ['sudo', 'chmod', '750', dest_file]
+    command = ['sudo', 'chmod', '750', object]
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode == 0:
-        print(f"Права доступа для файла {dest_file} успешно изменены.")
+        print(f"Права доступа для файла {object} успешно изменены.")
     else:
-        print(f"Произошла ошибка при изменении прав доступа файла {dest_file}:")
+        print(f"Произошла ошибка при изменении прав доступа файла {object}:")
         print(result.stderr.decode())
     
     # Обновление базы данных
@@ -78,6 +74,7 @@ def add_to_nextcloud (dest_file):
     except subprocess.CalledProcessError as e:
         print(f'Ошибка выполнения команды {command}: {e}')
 
+check_in_out_dirs (dir_in_name, dir_out_name)
 while True:
     for root, _, files in os.walk(directory_in):
         for filename in files:
@@ -86,13 +83,9 @@ while True:
                 source_file = os.path.join(root, filename)
                 # Определяем относительный путь файла от папки 'IN'
                 relative_path = os.path.relpath(source_file, directory_in)
-                print(f'relative_path: {relative_path}')
                 dest_subdir = os.path.dirname(relative_path)
-                print(f'dest_subdir: {dest_subdir}')
                 dest_subdir_full = os.path.join(directory_out, dest_subdir)
-                print(f'dest_subdir_full: {dest_subdir_full}')
                 dest_file = os.path.join(dest_subdir_full, os.path.splitext(filename)[0] + '.mp4')
-                print(f'dest_file: {dest_file}')
                 
                 # Создаем подкаталог в папке 'OUT', если его еще нет
                 os.makedirs(dest_subdir_full, exist_ok=True)
@@ -110,4 +103,5 @@ while True:
                     # Удаляем файл в исходной папке
                     os.remove(source_file)
                     add_to_nextcloud(dest_file)
+    print('boom')
     time.sleep(3)
