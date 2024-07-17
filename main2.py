@@ -103,7 +103,7 @@ while True:
                         add_to_nextcloud(error_file)
                 else:
                     # Используем ffmpeg для конвертации
-                    ffmpeg.input(source_file).output(dest_file, vcodec='libx264', acodec='aac').global_args('-threads', '4').run()
+                    ffmpeg.input(source_file).output(dest_file, vcodec='libx264', acodec='aac').global_args('-threads', '1').run()
                     # Удаляем файл в исходной папке
                     os.remove(source_file)
                     add_to_nextcloud(dest_file)
