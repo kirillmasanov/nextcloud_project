@@ -10,6 +10,7 @@ def create_directory(user, working_directory, output_directory_name):
     if not os.path.exists('/'.join((working_directory, output_directory_name))):
         os.makedirs('/'.join((working_directory, output_directory_name)))
         dir = '/'.join((working_directory, output_directory_name))
+        # Смена владельца папки
         command = f'sudo chown www-data:www-data {dir}'
         try:
             subprocess.run(command, shell=True, check=True)
