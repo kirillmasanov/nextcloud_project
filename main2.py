@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import shlex
 import subprocess
 import time
 
@@ -50,7 +51,8 @@ def check_in_out_dirs (dir_in_name, dir_out_name):
 def add_to_nextcloud (object):
     '''Изменяет владельца, права и обновляет БД Nextcloud'''
     # Изменение владельца файла
-    command = f'sudo chown www-data:www-data {object}'
+    command = f'sudo chown -R www-data:www-data {shlex.quote(object)}'
+    print(f'object: {object}')
     try:
         subprocess.run(command, shell=True, check=True)
         print(f'Команда {command} выполнена успешно')
@@ -89,12 +91,16 @@ while True:
                 dest_file = os.path.join(dest_subdir_full, os.path.splitext(filename)[0] + '.mp4')
                 
                 # Создаем подкаталог в папке 'OUT', если его еще нет
-                os.makedirs(dest_subdir_full, exist_ok=True)
-                
+                if not os.path.exists(dest_subdir_full):
+                    # Создаем подкаталог, если его еще нет
+                    os.makedirs(dest_subdir_full, exist_ok=True)
+                    add_to_nextcloud(dest_subdir_full)
+
                 # Проверяем наличие файла в папке 'OUT'
                 if os.path.exists(dest_file):
                     # Создаем файл с текстом "Error"
-                    error_file = os.path.join(dest_subdir_full, os.path.splitext(filename)[0] + '.txt')
+                    in_subdir_full = os.path.join(directory_in, dest_subdir)
+                    error_file = os.path.join(in_subdir_full, os.path.splitext(filename)[0] + '.txt')
                     if not os.path.exists(error_file):
                         with open(error_file, 'w') as f:
                             current_datetime = datetime.now()
@@ -107,4 +113,5 @@ while True:
                     # Удаляем файл в исходной папке
                     os.remove(source_file)
                     add_to_nextcloud(dest_file)
+    print('boom!')
     time.sleep(3)
