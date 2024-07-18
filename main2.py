@@ -77,6 +77,16 @@ def add_to_nextcloud (object):
     except subprocess.CalledProcessError as e:
         print(f'Ошибка выполнения команды {command}: {e}')
 
+def convert_file(input_file, output_file, threads=4):
+    (
+        ffmpeg
+        .input(input_file)
+        .output(output_file, vcodec='libx264', acodec='aac')
+        .global_args('-threads', str(threads))
+        .global_args('-preset', 'fast')  # 'veryfast', 'superfast', 'ultrafast' для ускорения
+        .run(overwrite_output=True)
+    )
+
 check_in_out_dirs (dir_in_name, dir_out_name)
 while True:
     for root, _, files in os.walk(directory_in):
@@ -117,7 +127,8 @@ while True:
                         print(f"Произошла ошибка при изменении прав доступа файла {object}:")
                         print(result.stderr.decode())
                     # Используем ffmpeg для конвертации
-                    ffmpeg.input(source_file).output(dest_file, vcodec='libx264', acodec='aac').global_args('-threads', '1').run()
+                    #ffmpeg.input(source_file).output(dest_file, vcodec='libx264', acodec='aac').global_args('-threads', '1').run()
+                    convert_file(source_file, dest_file, threads=4)
                     # Удаляем файл в исходной папке
                     os.remove(source_file)
                     add_to_nextcloud(dest_file)
