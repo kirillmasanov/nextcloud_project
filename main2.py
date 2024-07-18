@@ -127,7 +127,6 @@ while True:
                         print(f"Произошла ошибка при изменении прав доступа файла {object}:")
                         print(result.stderr.decode())
                     # Используем ffmpeg для конвертации
-                    #ffmpeg.input(source_file).output(dest_file, vcodec='libx264', acodec='aac').global_args('-threads', '1').run()
                     convert_file(source_file, dest_file, threads=4)
                     # Удаляем файл в исходной папке
                     os.remove(source_file)
