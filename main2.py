@@ -108,6 +108,14 @@ while True:
                             f.write(f'{current_datetime}: файл {ff} уже существует!')
                         add_to_nextcloud(error_file)
                 else:
+                    # Снимаем права на удаление/изменение
+                    command = ['sudo', 'chmod', '444', source_file]
+                    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    if result.returncode == 0:
+                        print(f"Права доступа для файла {source_file} успешно изменены.")
+                    else:
+                        print(f"Произошла ошибка при изменении прав доступа файла {object}:")
+                        print(result.stderr.decode())
                     # Используем ffmpeg для конвертации
                     ffmpeg.input(source_file).output(dest_file, vcodec='libx264', acodec='aac').global_args('-threads', '1').run()
                     # Удаляем файл в исходной папке
